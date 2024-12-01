@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vega-Lite Visualizations</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.22.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.9.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.20.2"></script>
+  <style>
+    
+    .chart-container {
+      margin-bottom: 40px;
+      padding: 10px;
+      
+    }
+    .chart {
+      width: 800px;
+      height: 600px;
+    }
+    #chart1{
+        top: 18px;
+    }
+    #chart2 {
+        top: -100px;
+    }
+    #chart3 {
+        right: -600px;
+    }
+ 
+  </style>
+</head>
+<body>
+
+  <div id="chart1" class="chart-container"></div>
+
+  <div id="chart2" class="chart-container"></div>
+
+  <div id="chart3" class="chart-container"></div>
+  <script>
+    // First chart: Stacked Bar Chart
+    const chart1Spec = {
+    
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Number Participants in each Sport by Gender",
+    "anchor": "middle",
+    "fontSize": 16,
+    "fontWeight": "bold",
+    "color": "black",
+    "dy": -10
+  },
+  "data": {
+    "url": "https://raw.githubusercontent.com/AyanMulla09/InfoVisProject/refs/heads/main/cleaned_file.csv",
+    "format": {
+      "type": "csv"
+    }
+  },
+  "selection": {
+    "sexFilter": {
+      "type": "multi",
+      "fields": ["sex"],
+      "bind": "legend"
+    }
+  },
+  "transform": [
+    {
+      "aggregate": [
+        {
+          "op": "count",
+          "field": "id",
+          "as": "participant_count"
+        }
+      ],
+      "groupby": ["sport", "sex"]
+    },
+    {
+      "window": [
+        {
+          "op": "sum",
+          "field": "participant_count",
+          "as": "total_participants"
+        }
+      ],
+      "groupby": ["sport"]
+    },
+    {
+      "filter": {
+        "selection": "sexFilter"
+      }
+    }
+  ],
+  "mark": {
+    "type": "bar",
+    "transition": {
+      "duration": 500,
+      "easing": "ease-in-out"
+    }
+  },
+  "encoding": {
+    "x": {
+      "field": "sport",
+      "type": "nominal",
+      "title": "Sport",
+      "sort": {
+        "field": "participant_count",
+        "order": "descending"
+      }
+    },
+    "y": {
+      "field": "participant_count",
+      "type": "quantitative",
+      "title": "Total Participants",
+      "scale": {
+        "domain": [0, 4000]  
+      }
+    },
+    "color": {
+      "field": "sex",
+      "type": "nominal",
+      "legend": {
+        "title": "Gender",
+        "labelExpr": "datum.value === 'F' ? 'Female' : datum.value === 'M' ? 'Male' : datum.value"
+      },
+      "scale": {
+        "domain": ["F", "M"],
+        "range": ["#009688", "#FF5722"]
+      }
+    },
+    "tooltip": [
+      {
+        "field": "sport",
+        "type": "nominal",
+        "title": "Sport"
+      },
+      {
+        "field": "participant_count",
+        "type": "quantitative",
+        "title": "Total Participants"
+      },
+      {
+        "field": "sex",
+        "type": "nominal",
+        "title": "Gender"
+      }
+    ]
+  },
+  "config": {
+    "view": {
+      "stroke": null,
+      "width": 800,
+      "height": 400
+    }
+  }
+
+
+    };
+
+    // Second chart: Point chart for Medal counts
+    const chart2Spec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+    "text": "Medals by Age and Gender",
+    "anchor": "middle",
+    "fontSize": 16,
+    "fontWeight": "bold",
+    "color": "black",
+    "dy": -10
+  },
+      "data": {
+        "url": "https://raw.githubusercontent.com/AyanMulla09/InfoVisProject/refs/heads/main/cleaned_file.csv",
+        "format": { "type": "csv" }
+      },
+      "transform": [
+        { "filter": "datum.medal !== 'NA'" },
+        {
+          "aggregate": [{ "op": "count", "field": "medal", "as": "medal_count" }],
+          "groupby": ["age", "medal"]
+        },
+        {
+          "filter": { "selection": "medal" }
+        }
+      ],
+      "selection": {
+        "medal": {
+          "type": "multi",
+          "fields": ["medal"],
+          "bind": "legend"
+        }
+      
+      },
+      "mark": "point",
+      "encoding": {
+        "x": { "field": "age", "type": "quantitative", "title": "Age" },
+        "y": { "field": "medal_count", "type": "quantitative", "title": "Count of Medals" },
+        "color": {
+          "field": "medal",
+          "type": "nominal",
+          "legend": { "title": "Medal" },
+          "scale": {
+            "domain": ["Gold", "Silver", "Bronze"],
+            "range": ["#FFD700", "#A8A8A8", "#8C4A2A"]
+          }
+        },
+        "tooltip": [
+          { "field": "age", "type": "quantitative", "title": "Age" },
+          { "field": "medal_count", "type": "quantitative", "title": "Count of Medals" },
+          { "field": "medal", "type": "nominal", "title": "Medal" }
+        ]
+      },
+      "config": {
+        "view": { "stroke": null, "width": 800, "height": 400 }
+      }
+    };
+
+    // Third chart: Layered chart for Age of Athletes by Year
+    const chart3Spec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": "Age of Athletes in Selected Events Per Year",
+      "data": {
+        "url": "https://raw.githubusercontent.com/AyanMulla09/InfoVisProject/refs/heads/main/cleaned_file.csv",
+        "format": { "type": "csv" }
+      },
+      "transform": [
+        { "calculate": "year(datum.year)", "as": "Year" },
+        { "filter": { "field": "Year", "range": [1896, 2016] } }
+      ],
+      "layer": [
+        {
+          "selection": {
+            "grid": { "type": "interval", "bind": "scales" },
+            "athletic": {
+              "type": "single",
+              "fields": ["event"],
+              "init": { "event": "Athletics Men's 100 metres" },
+              "bind": {
+                "input": "select",
+                "options": [
+                  "Athletics Men's 100 metres",
+                  "Athletics Women's 100 metres",
+                  "Athletics Men's 200 metres",
+                  "Athletics Men's 400 metres",
+                  "Athletics Men's 800 metres",
+                  "Athletics Men's Marathon",
+                  "Athletics Men's 110 Metres Hurdles",
+                  "Athletics Men's Long Jump",
+                  "Athletics Men's High Jump",
+                  "Athletics Men's Discus Throw"
+                ]
+              }
+            }
+          },
+          "mark": "circle",
+          "encoding": {
+            "x": { "field": "Year", "type": "ordinal", "title": "Year" },
+            "y": { "field": "age", "type": "quantitative", "title": "Age" },
+            "color": {
+              "condition": {
+                "selection": "athletic",
+                "field": "medal",
+                "type": "nominal"
+              },
+              "value": "#d3d3d3"
+            },
+            "size": {
+              "field": "medal",
+              "type": "nominal",
+              "scale": { "domain": ["None", "Bronze", "Silver", "Gold"], "range": [20, 70, 70, 70] }
+            },
+            "fillOpacity": {
+              "field": "medal",
+              "type": "nominal",
+              "scale": { "domain": ["None", "Bronze", "Silver", "Gold"], "range": [0.1, 1, 1, 1] }
+            },
+            "tooltip": [
+              { "field": "name", "type": "nominal", "title": "Athlete" },
+              { "field": "team", "type": "nominal", "title": "Team" },
+              { "field": "age", "type": "quantitative", "title": "Age" },
+              { "field": "medal", "type": "nominal", "title": "Medal" }
+            ]
+          },
+          "config": {
+        "view": { "stroke": null, "width": 1000, "height": 1000 }
+      }
+        },
+        {
+          "transform": [{ "filter": { "selection": "athletic" } }],
+          "mark": "circle",
+          "encoding": {
+            "x": { "field": "Year", "type": "ordinal", "title": "Year" },
+            "y": { "field": "age", "type": "quantitative", "title": "Age" },
+            "color": {
+              "field": "medal",
+              "type": "nominal",
+              "scale": {
+                "domain": ["None", "Bronze", "Silver", "Gold"],
+                "range": ["#6192ba", "#8C4A2A", "#A8A8A8", "#FFD700"]
+              }
+            },
+            "size": {
+              "field": "medal",
+              "type": "nominal",
+              "scale": { "domain": ["None", "Bronze", "Silver", "Gold"], "range": [10, 500, 500, 500] }
+            },
+            "fillOpacity": {
+              "field": "medal",
+              "type": "nominal",
+              "scale": { "domain": ["None", "Bronze", "Silver", "Gold"], "range": [0.1, 1, 1, 1] }
+            },
+            "tooltip": [
+              { "field": "name", "type": "nominal", "title": "Athlete" },
+              { "field": "team", "type": "nominal", "title": "Team" },
+              { "field": "age", "type": "quantitative", "title": "Age" }
+            ]
+          }
+          
+        }
+      ]
+      
+    };
+
+    vegaEmbed('#chart1', chart1Spec);
+    vegaEmbed('#chart2', chart2Spec);
+    vegaEmbed('#chart3', chart3Spec);
+  </script>
+
+</body>
+</html>
